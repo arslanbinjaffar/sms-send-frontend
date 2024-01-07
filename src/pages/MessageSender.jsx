@@ -2,74 +2,67 @@ import axios from "axios";
 import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { uploadImage } from "../../firebase";
+import InfiniteScroll from "react-infinite-scroll-component";
 const MessageSender = () => {
   const navigate = useNavigate();
   const [fileUpload, setFileUpload] = useState([]);
   const [groups, setGroups] = useState([]);
   const [message, setMessage] = useState("");
-  const [addNumber,setAddNumber]=useState("")
+  const [page, setPage] = useState(1)
   const [processing, setProcessing] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [isSubmitted,setIsSubmitted]=useState(false)
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     setFileUpload(selectedFile);
   };
   const handleUploadFile = async () => {
     try {
-      setProcessing(true);
       if (fileUpload.type !== "text/csv") {
         console.error("Invalid file type. Please select a CSV file.");
         return;
       }
-      const formData = new FormData();
-      formData.append("file", fileUpload);
-      const res = await axios.post("file/upload", formData);
-      if (res.status !== 200) {
-        setProcessing(false);
-      } else {
-        setGroups(res.data?.results);
-        setProcessing(false);
-      }
+      setIsSubmitted(true);
+      const url = await uploadImage(fileUpload)
+      toast.success("url successfully")      
+      const res = await axios.post('file/upload', { url })
+      toast.success("data successfully")
+        setIsSubmitted(false);
+      setGroups(res.data?.results);
     } catch (error) {
-      if (error) {
         toast.error("file failed to upload" + error.message);
-      }
-      setProcessing(false);
+        setIsSubmitted(false);      
+
     }
   };
-  const handleSendMessage = async (data, message) => {
-    try {
-      const res = await axios.post("file/sendbulkmessages", { data, message });
-      if (res.status === 200) {
-        setIsDisabled(true);
-        toast.success("Message successfully sent");
-      }
-    } catch (error) {
-      console.error(error.response);
-    }
-  };
+ 
 
-  useLayoutEffect(() => {
-    const handleGetGroups = async () => {
-      try {
-        const res = await axios("file/getallgroups");
-        setGroups(res.data.results);
-      } catch (error) {
-        toast.error("Error: " + error.message);
-      }
-    };
-
-    handleGetGroups();
-  }, [groups]);
   const handlelogOut = async () => {
     // const token = localStorage.removeItem("token")
     // if (!token) {
     navigate("/login");
     // }
   };
+  const FetchGroupsData = async (page,limit=20) => {
+    try {
+      setProcessing(true)
+      const res = await axios.get(`file/getallgroups?page=${page}&limit=${limit}`);
+      setPage(page)
+      setProcessing(false)
+      setGroups(res.data?.results);
+    } catch (error) {
+      setProcessing(false)
+      console.log(error)
+    }
+  }
+  useEffect(() => {
+    FetchGroupsData(page);
+  }, []);
+  console.log(groups)
+  console.log(page)
   const memoizedComponent = useMemo(() => {
     return (
-      <section className="bg-gray-50 h-screen">
+      <section className="bg-gray-50">
         <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto  lg:py-0">
           <div className="w-full bg-white rounded-lg shadow border md:my-8 sm:max-w-lg xl:p-0">
             <div className="p-3 pt-2 space-y-4 md:space-y-6 sm:p-8 sm:pt-3 w-full mt-5">
@@ -82,10 +75,9 @@ const MessageSender = () => {
                   className=" text-white bg-red-500  font-medium rounded-lg text-sm px-5 py-2.5 text-center"
                 >
                   Logout
-                </button>
+                </button> 
               </div>
                 <div className="flex items-center justify-center w-full flex-col gap-4">
-                  {fileUpload.length == 0 && (
                     <label
                       htmlFor="dropzone-file"
                       className="flex flex-col items-center justify-center w-full h-28 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
@@ -119,16 +111,16 @@ const MessageSender = () => {
                         onChange={handleFileChange}
                       />
                     </label>
-                  )}
                   {fileUpload.length !== 0 && <h1>File::{fileUpload?.name}</h1>}
-                  <button
+                <button
+                    disabled={isSubmitted}
                     onClick={handleUploadFile}
                     className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
                   >
-                    Submit
+                    Submit 
                   </button>
                 </div>
-              <div>
+              {/* <div>
                 <label
                   htmlFor="number-input"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -143,8 +135,9 @@ const MessageSender = () => {
                   placeholder="13458222"
                   required
                 />
-              </div>
-              {processing && <Loader />}
+              </div> */}
+              {isSubmitted && <div className="flex justify-center items-center"> <Loader /></div>}
+              {processing && <div className="flex justify-center items-center"> <Loader /></div>}
               {groups.length !== 0 && (
                 <>
                   <div>
@@ -164,39 +157,7 @@ const MessageSender = () => {
                       required
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-7">
-                    {groups?.map((elem, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center bg-gray-200 p-2 rounded-lg flex-col"
-                      >
-                        <div className="flex justify-between items-center w-full">
-                          <h3 className="font-semibold">Group {index + 1}</h3>
-                          <button
-                            disabled={isDisabled}
-                            onClick={() => handleSendMessage(elem, message)}
-                            className={`
-                      ${
-                        isDisabled
-                          ? " text-black bg-white hover:bg-black hover:text-white"
-                          : "text-white bg-primary-600 hover:bg-primary-700"
-                      }
-                      
-                       focus:ring-4
-                      focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5
-                        py-2.5 text-center`}
-                          >
-                            Send
-                          </button>
-                        </div>
-                        {/* {elem.map((item, itemIndex) => (
-          <div key={itemIndex} className=" bg-gray-200 p-2 rounded-lg flex justify-between items-center w-full">
-            <h3 className="font-semibold">{item.Name} </h3>
-          </div>
-        ))} */}
-                      </div>
-                    ))}
-                  </div>
+                  <Groups groups={groups} message={message} setGroups={setGroups} FetchGroupsData={FetchGroupsData} page={page} setPage={setPage} setProcessing={ setProcessing} processing={ processing} />
                 </>
               )}
             </div>
@@ -204,7 +165,7 @@ const MessageSender = () => {
         </div>
       </section>
     );
-  }, [fileUpload, groups, message, processing]);
+  }, [fileUpload, message, processing,isSubmitted,page]);
   return memoizedComponent;
 };
 
@@ -230,6 +191,83 @@ function Loader() {
         />
       </svg>
       <span className="sr-only">Loading...</span>
+    </div>
+  );
+}
+
+function Groups({ groups,setGroups,message, page, setPage, processing, setProcessing }) {
+
+  const loadMoreData = async () => {
+    if (!processing) {
+      try {
+        setProcessing(true);
+        const res = await axios.get(`file/getallgroups?page=${page + 1}&limit=20`);
+        setPage(page + 1);
+        setProcessing(false);
+        setGroups((prevGroups) => [...prevGroups, ...res.data?.results]);
+      } catch (error) {
+        setProcessing(false);
+        console.log(error);
+      }
+    }
+  };
+
+  const handleSendMessage = async (data, message) => {
+    try {
+      const res = await axios.post("file/sendbulkmessages", { data, message });
+      if (res.status === 200) {
+        toast.success("Message successfully sent");
+      }
+    } catch (error) {
+      console.error(error.response);
+    }
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-7">
+        {groups?.map((elem, index) => (
+          <div
+            key={index}
+            className="flex justify-between items-center bg-gray-200 p-2 rounded-lg flex-col"
+          >
+            <div className="flex justify-between items-center w-full">
+              <h3 className="font-semibold">Group {index + 1}</h3>
+              <button
+                onClick={() => handleSendMessage(elem, message)}
+                className={`
+                  text-white bg-primary-600 hover:bg-primary-700
+                  focus:ring-4
+                  focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5
+                  py-2.5 text-center`}
+              >
+                Send
+              </button>
+            </div>
+            {/* {elem.map((item, itemIndex) => (
+              <div key={itemIndex} className=" bg-gray-200 p-2 rounded-lg flex justify-between items-center w-full">
+                <h3 className="font-semibold">{item.Name} </h3>
+              </div>
+            ))} */}
+          </div>
+        ))}
+      </div>
+
+      {groups.length > 0 && (
+        <div className="flex justify-center items-center mt-5">
+          <button
+            onClick={loadMoreData}
+            disabled={processing}
+            className={`
+              text-white bg-primary-600 hover:bg-primary-700
+              focus:ring-4
+              focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5
+              py-2.5 text-center`}
+          >
+            {processing ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
