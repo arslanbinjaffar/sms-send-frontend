@@ -10,7 +10,7 @@ import axios from "axios";
 // axios.defaults.baseURL = "https://backend-5b02geagv-arslanbinjaffar.vercel.app/";
 // axios.defaults.baseURL = "http://localhost:8000/";
 
-axios.defaults.baseURL="https://sms-send-nest-js-production.up.railway.app/"
+axios.defaults.baseURL="https://izhmw2qjmx.us-east-2.awsapprunner.com/"
   
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
