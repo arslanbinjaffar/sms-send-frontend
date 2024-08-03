@@ -39,18 +39,18 @@ const MessageSender = () => {
  
 
   const handlelogOut = async () => {
-    // const token = localStorage.removeItem("token")
-    // if (!token) {
+    const token = localStorage.removeItem("acesss_token")
+    if (!token) {
     navigate("/login");
-    // }
+    }
   };
   const FetchGroupsData = async (page,limit=5) => {
     try {
       setProcessing(true)
-      const res = await axios.get(`file/getallgroups?page=${page}&limit=${limit}`);
+      const res = await axios.get(`/api/v1/sms/group?page=${page}&limit=${limit}`);
       setPage(page)
       setProcessing(false)
-      setGroups(res.data?.results);
+      setGroups(res.data?.data);
     } catch (error) {
       setProcessing(false)
       console.log(error)
@@ -202,7 +202,7 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
     if (!processing) {
       try {
         setProcessing(true);
-        const res = await axios.get(`file/getallgroups?page=${page + 1}&limit=20`);
+        const res = await axios.get(`/api/v1/sms/group?page=${page + 1}&limit=20`);
         setPage(page + 1);
         setProcessing(false);
         setGroups((prevGroups) => [...prevGroups, ...res.data?.results]);

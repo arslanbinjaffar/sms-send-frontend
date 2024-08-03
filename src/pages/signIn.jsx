@@ -25,7 +25,7 @@ function SignInForm() {
       );
       if (res.status == 200) {
         navigate("/");
-        localStorage.setItem('acesss_token',JSON.stringify(res.data.acesss_token))
+        localStorage.setItem('acesss_token',res.data.acesss_token)
         toast.success("login successfully");
       }
       if (res.status !== 200) {
