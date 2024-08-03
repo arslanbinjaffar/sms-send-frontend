@@ -205,7 +205,7 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
         const res = await axios.get(`/api/v1/sms/group?page=${page + 1}&limit=20`);
         setPage(page + 1);
         setProcessing(false);
-        setGroups((prevGroups) => [...prevGroups, ...res.data?.results]);
+        setGroups((prevGroups) => [...prevGroups, ...res.data?.data]);
       } catch (error) {
         setProcessing(false);
         console.log(error);
