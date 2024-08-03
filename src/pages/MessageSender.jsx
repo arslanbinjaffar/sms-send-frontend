@@ -20,19 +20,20 @@ const MessageSender = () => {
     try {
       if (fileUpload.type !== "text/csv") {
         console.error("Invalid file type. Please select a CSV file.");
+        toast.error("Invalid file type. Please select a CSV file.");
         return;
       }
       setIsSubmitted(true);
-      const url = await uploadImage(fileUpload)
-      toast.success("url successfully")      
-      const res = await axios.post('file/upload', { url })
-      toast.success("data successfully")
-        setIsSubmitted(false);
-      setGroups(res.data?.results);
+      const url = await uploadImage(fileUpload);
+      toast.success("File uploaded successfully");
+      const res = await axios.post('/api/v1/sms/process', { url });
+      toast.success("Data sent successfully");
+      setIsSubmitted(false);
+      console.log(res,"res")
+      setGroups(res.data?.data);
     } catch (error) {
-        toast.error("file failed to upload" + error.message);
-        setIsSubmitted(false);      
-
+      toast.error("File upload failed: " + error.message);
+      setIsSubmitted(false);
     }
   };
  
@@ -43,7 +44,7 @@ const MessageSender = () => {
     navigate("/login");
     // }
   };
-  const FetchGroupsData = async (page,limit=20) => {
+  const FetchGroupsData = async (page,limit=5) => {
     try {
       setProcessing(true)
       const res = await axios.get(`file/getallgroups?page=${page}&limit=${limit}`);
@@ -214,7 +215,7 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
 
   const handleSendMessage = async (data, message) => {
     try {
-      const res = await axios.post("file/sendbulkmessages", { data, message });
+      const res = await axios.post(`file/sendbulkmessages`, { data, message });
       if (res.status === 200) {
         toast.success("Message successfully sent");
       }

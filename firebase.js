@@ -22,11 +22,12 @@ export const storage = getStorage(app);
 
 export const uploadImage = async (file) => {
   const imageRef = ref(storage, `postImages/${file.name + v4()}`);
-  return await uploadBytes(imageRef, file)
-    .then(() =>
-      getDownloadURL(imageRef)
-        .then((res) => res)
-        .catch((err) => console.log(err))
-    )
-    .catch((err) => console.log(err));
+  try {
+    await uploadBytes(imageRef, file);
+    const downloadURL = await getDownloadURL(imageRef);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
 };

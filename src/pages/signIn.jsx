@@ -10,7 +10,6 @@ function SignInForm() {
     checked: false,
   });
   const handleSubmit = async (e) => {
-    const token = localStorage.getItem("token");
     try {
       e.preventDefault();
       const { email, password, checked } = formData;
@@ -18,19 +17,15 @@ function SignInForm() {
         toast.error("you must filled all fields");
       }
       const res = await axios.post(
-        "user/login",
+        "/api/v1/user/super_login",
         {
           email: email,
           password: password,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       if (res.status == 200) {
         navigate("/");
+        localStorage.setItem('acesss_token',JSON.stringify(res.data.acesss_token))
         toast.success("login successfully");
       }
       if (res.status !== 200) {
