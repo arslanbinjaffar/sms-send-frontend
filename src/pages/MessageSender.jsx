@@ -215,7 +215,7 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
 
   const handleSendMessage = async (data, message) => {
     try {
-      const res = await axios.post(`file/sendbulkmessages`, { data, message });
+      const res = await axios.post(`/api/v1/sms/send`, { data, message });
       if (res.status === 200) {
         toast.success("Message successfully sent");
       }
