@@ -9,6 +9,7 @@ const MessageSender = () => {
   const [fileUpload, setFileUpload] = useState([]);
   const [groups, setGroups] = useState([]);
   const [message, setMessage] = useState("");
+  const [senderNum,setSenderNum]=useState("")
   const [page, setPage] = useState(1)
   const [processing, setProcessing] = useState(false);
   const [isSubmitted,setIsSubmitted]=useState(false)
@@ -155,6 +156,23 @@ const MessageSender = () => {
                       id="first_name"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                       placeholder="Enter your message"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="first_name"
+                      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Sender Number
+                    </label>
+                    <input
+                      type="text"
+                      onChange={(e) =>setSenderNum(Number(e.target.value))}
+                      value={senderNum}
+                      id="first_name"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      placeholder="Enter your sender number"
                       required
                     />
                   </div>
