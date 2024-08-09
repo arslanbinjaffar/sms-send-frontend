@@ -3,7 +3,6 @@ import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { uploadImage } from "../../firebase";
-import InfiniteScroll from "react-infinite-scroll-component";
 const MessageSender = () => {
   const navigate = useNavigate();
   const [fileUpload, setFileUpload] = useState([]);
@@ -167,8 +166,9 @@ const MessageSender = () => {
                       Sender Number
                     </label>
                     <input
-                      type="text"
-                      onChange={(e) =>setSenderNum(Number(e.target.value))}
+                      type="number"
+                      
+                      onChange={(e) =>setSenderNum(e.target.value)}
                       value={senderNum}
                       id="first_name"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -176,7 +176,7 @@ const MessageSender = () => {
                       required
                     />
                   </div>
-                  <Groups groups={groups} message={message} setGroups={setGroups} FetchGroupsData={FetchGroupsData} page={page} setPage={setPage} setProcessing={ setProcessing} processing={ processing} />
+                  <Groups groups={groups} message={message} senderNum={senderNum} setGroups={setGroups} FetchGroupsData={FetchGroupsData} page={page} setPage={setPage} setProcessing={ setProcessing} processing={ processing} />
                 </>
               )}
             </div>
@@ -184,7 +184,7 @@ const MessageSender = () => {
         </div>
       </section>
     );
-  }, [fileUpload, message, processing,isSubmitted,page]);
+  }, [fileUpload, message, processing,isSubmitted,page,senderNum]);
   return memoizedComponent;
 };
 
@@ -214,8 +214,7 @@ function Loader() {
   );
 }
 
-function Groups({ groups,setGroups,message, page, setPage, processing, setProcessing }) {
-
+function Groups({ groups,setGroups,message, page, setPage, processing, setProcessing,senderNum }) {
   const loadMoreData = async () => {
     if (!processing) {
       try {
@@ -231,44 +230,14 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
     }
   };
 
-  const handleSendMessage = async (data, message) => {
-    try {
-      const res = await axios.post(`/api/v1/sms/send`, { data, message });
-      if (res.status === 200) {
-        toast.success("Message successfully sent");
-      }
-    } catch (error) {
-      console.error(error.response);
-    }
-  };
+
+  
 
   return (
     <div>
       <div className="grid grid-cols-2 gap-7">
-        {groups?.map((elem, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center bg-gray-200 p-2 rounded-lg flex-col"
-          >
-            <div className="flex justify-between items-center w-full">
-              <h3 className="font-semibold">Group {index + 1}</h3>
-              <button
-                onClick={() => handleSendMessage(elem, message)}
-                className={`
-                  text-white bg-primary-600 hover:bg-primary-700
-                  focus:ring-4
-                  focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5
-                  py-2.5 text-center`}
-              >
-                Send
-              </button>
-            </div>
-            {/* {elem.map((item, itemIndex) => (
-              <div key={itemIndex} className=" bg-gray-200 p-2 rounded-lg flex justify-between items-center w-full">
-                <h3 className="font-semibold">{item.Name} </h3>
-              </div>
-            ))} */}
-          </div>
+        {groups?.map((elem, key) => (
+        <SingleGroup elem={elem} key={key} message={message} index={key} loadMoreData={loadMoreData} senderNum={senderNum}/>
         ))}
       </div>
 
@@ -289,4 +258,52 @@ function Groups({ groups,setGroups,message, page, setPage, processing, setProces
       )}
     </div>
   );
+}
+
+
+
+function SingleGroup({ elem, index,message,senderNum,loadMoreData }) {
+  const handleSendMessage = async (data) => {
+    try {
+      if (message == "") {
+        toast.error("please enter message")
+        return;
+      }
+      if (senderNum=="") {
+        toast.error("please enter your  number")
+      }
+      const res = await axios.post(`/api/v1/sms/send`, { data, message,senderNum });
+      if (res.status === 200) {
+        toast.success("Message successfully sent");
+      }
+    } catch (error) {
+      console.error(error,"error data");
+      toast.error(error.message)
+    }
+  };
+  return (
+    <div
+   
+    className="flex justify-between items-center bg-gray-200 p-2 rounded-lg flex-col"
+  >
+    <div className="flex justify-between items-center w-full">
+      <h3 className="font-semibold">Group {index + 1}</h3>
+      <button
+        onClick={() => handleSendMessage(elem)}
+        className={`
+          text-white bg-primary-600 hover:bg-primary-700
+          focus:ring-4
+          focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5
+          py-2.5 text-center`}
+      >
+        Send sms
+      </button>
+    </div>
+    {/* {elem.map((item, itemIndex) => (
+      <div key={itemIndex} className=" bg-gray-200 p-2 rounded-lg flex justify-between items-center w-full">
+        <h3 className="font-semibold">{item.Name} </h3>
+      </div>
+    ))} */}
+  </div>
+  )
 }
